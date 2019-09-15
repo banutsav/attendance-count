@@ -132,3 +132,4 @@ if __name__ == '__main__':
 	
 	finally:
 		print('Completed...')
+		input('You can close this window now...')
