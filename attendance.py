@@ -1,7 +1,12 @@
 import os
+import sys
 import pandas as pd
 from pathlib import Path
 from datetime import datetime
+
+# Constants
+# Salary grade for labor
+LOW_SALARY = 300
 
 # Master attendance dictionary
 days_dict = {}
@@ -10,6 +15,8 @@ days_dict = {}
 def writeMasterToCSV(output_path, salaryfile, dates):
 	# Construct a dataframe for employee salaries
 	df = pd.read_csv(salaryfile)
+	# making new data frame with dropped NA values 
+	df = df.dropna(axis = 0, how ='any')
 	df.set_index('Employee Code', inplace=True)
 
 	# Sort dates
@@ -17,7 +24,7 @@ def writeMasterToCSV(output_path, salaryfile, dates):
 	print('Destination:',output_path)
 	
 	# Construct Header
-	header = 'EmpNo,Name,Count,Salary'
+	header = 'EmpNo,Name,Count,Salary,EmpType'
 	for date in dates:
 		header = header + ',' + date
 
@@ -35,9 +42,11 @@ def writeMasterToCSV(output_path, salaryfile, dates):
 			attendance = days_dict[emp]['attendance']
 			# Get the daily salary for a person	
 			salary = df.loc[emp,'Total Salary'] if emp in df.index else 0
-			
+			# Classify employee from salary
+			emptype = 'indirect' if salary < LOW_SALARY else 'direct'
+
 			# Initialize CSV file data row
-			row = str(emp) + ',' + str(name) + ',' + str(count) + ',' + str(salary)
+			row = str(emp) + ',' + str(name) + ',' + str(count) + ',' + str(salary) + ',' + str(emptype)
 		
 			# Determine whether present or absent for the days
 			for date in dates:
