@@ -7,9 +7,51 @@ from datetime import datetime
 # Constants
 # Salary grade for labor
 LOW_SALARY = 300
+# Total working days
+WORKING_DAYS = 26
 
 # Master attendance dictionary
 days_dict = {}
+
+# Calculate per day cost on direct employees
+def perDayDirectEmpCost(file, outfile, dates):
+	# Sort dates
+	dates.sort(key = lambda date: datetime.strptime(date, '%d-%b'))
+	print('Calculating direct employee costs from:', file)
+	# Construct a dataframe for employee salaries
+	df = pd.read_csv(file)
+	# making new data frame with dropped NA values 
+	df = df.dropna(axis = 0, how ='any')
+	df.set_index('EmpNo', inplace=True)
+	# Get only direct employee records
+	df = df.loc[df['EmpType'] == 'direct']
+
+	# Construct header
+	header = 'Day,Cost'
+
+	# Write out file header and contents	
+	with open(outfile, 'w') as f:
+		# Write header
+		f.write(header + '\n')
+		# Iterate across dates
+		for date in dates:
+			cost_for_day = 0
+			# Iterate across employees
+			for index, row in df.iterrows():
+				# If present then add cost
+				if(row[date]=='P'):
+					cost_for_day += round(row['Salary']/WORKING_DAYS,2)
+		
+			cost_for_day = round(cost_for_day,2)
+			# Construct and Write row
+			row = str(date) + ',' + str(cost_for_day) 
+			f.write(row + '\n')
+
+		
+	# Close output CSV file
+	f.close()
+	print('Writing out to Cost Per Day file at ' + str(outfile) + ' completed...')
+
 
 # Write master attendance dict to csv
 def writeMasterToCSV(output_path, salaryfile, dates):
@@ -18,10 +60,9 @@ def writeMasterToCSV(output_path, salaryfile, dates):
 	# making new data frame with dropped NA values 
 	df = df.dropna(axis = 0, how ='any')
 	df.set_index('Employee Code', inplace=True)
-
+	
 	# Sort dates
 	dates.sort(key = lambda date: datetime.strptime(date, '%d-%b'))
-	print('Destination:',output_path)
 	
 	# Construct Header
 	header = 'EmpNo,Name,Count,Salary,EmpType'
@@ -65,7 +106,7 @@ def writeMasterToCSV(output_path, salaryfile, dates):
 
 	# Close output CSV file
 	f.close()
-	print('Writing out to file completed...')
+	print('Writing out to Emp-Attendance file at ' + str(output_path) + ' completed...')
 	
 # Create a master dictionary for each employe and their attendance across the dates
 def countDailyAttendance(d, date):
@@ -127,7 +168,7 @@ def createEmpAttendanceDict(data_source):
 
 if __name__ == '__main__':
 
-	try:
+	#try:
 		print('Execution started...')
 		data_source = Path(Path(os.getcwd()) / 'input')
 		print('Source: ', data_source)
@@ -135,10 +176,12 @@ if __name__ == '__main__':
 		salaryfile = Path(Path(os.getcwd()) / 'input/salary-eid.csv')
 		output_path = Path(Path(os.getcwd()) / 'output/attendance-count.csv')
 		writeMasterToCSV(output_path, salaryfile, dates)
+		cost_for_day_file = Path(Path(os.getcwd()) / 'output/cost-per-day.csv')
+		perDayDirectEmpCost(output_path, cost_for_day_file, dates)
 
-	except Exception as e:
-		print('[ERROR]:',e)
+	#except Exception as e:
+	#	print('[ERROR]:',e)
 	
-	finally:
+	#finally:
 		print('Completed...')
 		input('You can close this window now...')
