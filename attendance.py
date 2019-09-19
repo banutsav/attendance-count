@@ -1,6 +1,7 @@
 import os
 import sys
 import pandas as pd
+import time
 from pathlib import Path
 from datetime import datetime
 
@@ -168,20 +169,27 @@ def createEmpAttendanceDict(data_source):
 
 if __name__ == '__main__':
 
-	#try:
+	try:
+		start = time.time()
 		print('Execution started...')
 		data_source = Path(Path(os.getcwd()) / 'input')
 		print('Source: ', data_source)
+		# Get dates
 		dates = createEmpAttendanceDict(data_source)
+		# Get employee-salary rate file
 		salaryfile = Path(Path(os.getcwd()) / 'input/salary-eid.csv')
+		# Set path for employee attendance file
 		output_path = Path(Path(os.getcwd()) / 'output/attendance-count.csv')
+		# Write out the attendances to CSV
 		writeMasterToCSV(output_path, salaryfile, dates)
 		cost_for_day_file = Path(Path(os.getcwd()) / 'output/cost-per-day.csv')
+		# Calculate and write the cost per day variation for direct emps
 		perDayDirectEmpCost(output_path, cost_for_day_file, dates)
 
-	#except Exception as e:
-	#	print('[ERROR]:',e)
+	except Exception as e:
+		print('[ERROR]:',e)
 	
-	#finally:
-		print('Completed...')
+	finally:
+		end = time.time()
+		print('Execution finished in',str(round(end-start,2)),'secs')
 		input('You can close this window now...')
