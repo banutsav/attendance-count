@@ -70,7 +70,7 @@ def catAttendance(file):
 	cats = ['Above 25', '20-25', 'Below 20']
 	# Iterate across employees
 	for index, row in df.iterrows():
-		count = row['Salary']
+		count = row['Count']
 		cat = row['EmpType']
 		# Direct employees
 		if (cat == 'direct'):

@@ -2,6 +2,7 @@ import os
 import sys
 import pandas as pd
 import time
+import viz
 from pathlib import Path
 from datetime import datetime
 
@@ -149,7 +150,7 @@ def countDailyAttendance(d, date):
 def createEmpAttendanceDict(data_source):
 	dates = []
 	for filename in os.listdir(data_source):
-		try:
+		#try:
 			if filename.endswith('.csv') and not 'salary' in filename:
 				# Get date from filename
 				date = os.path.splitext(filename)[0]
@@ -161,15 +162,15 @@ def createEmpAttendanceDict(data_source):
 				d = df.to_dict('index')
 				# Update master dictionary with attendances for that day
 				countDailyAttendance(d, date)
-		except Exception as e:
-			print('[ERROR] There was an issue with file ' + filename + ', it will be skipped over')
-			print(e)
+		#except Exception as e:
+			#print('[ERROR] There was an issue with file ' + filename + ', it will be skipped over')
+			#print(e)
 
 	return dates
 
 if __name__ == '__main__':
 
-	try:
+	#try:
 		start = time.time()
 		print('Execution started...')
 		data_source = Path(Path(os.getcwd()) / 'input')
@@ -185,11 +186,12 @@ if __name__ == '__main__':
 		cost_for_day_file = Path(Path(os.getcwd()) / 'output/cost-per-day.csv')
 		# Calculate and write the cost per day variation for direct emps
 		perDayDirectEmpCost(output_path, cost_for_day_file, dates)
+		# Create HTML visualization
+		viz.vizMaster(output_path, cost_for_day_file)
 
-	except Exception as e:
-		print('[ERROR]:',e)
+	#except Exception as e:
+	#	print('[ERROR]:',e)
 	
-	finally:
+	#finally:
 		end = time.time()
 		print('Execution finished in',str(round(end-start,2)),'secs')
-		input('You can close this window now...')
