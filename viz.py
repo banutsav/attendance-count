@@ -44,14 +44,17 @@ if __name__ == '__main__':
 	cost_for_day_file = Path(Path(os.getcwd()) / 'output/cost-per-day.csv')
 	
 	# HR
-	emptimes = hr.getEmpTimes(datasource)
+	
+	emptimes, dates = hr.getEmpTimes(datasource)
 	direct, indirect, cats = hr.catAttendance(attfile)
+
 	figures = {
-		'times': hr.stackedTimes(emptimes),
-		'attcats': hr.stackedAttCat(direct, indirect, cats)
+		#'times': hr.stackedTimes(emptimes),
+		#'attcats': hr.stackedAttCat(direct, indirect, cats),
+		'latecomers': hr.stackedLates(attfile, dates),
 	}
 	writeResults(figures,'hr.html')
-	
+
 	# Production
 	figures = {
 		'dempcost': production.scatterPerDayCost(cost_for_day_file)

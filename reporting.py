@@ -4,10 +4,11 @@ import pandas as pd
 import time
 from pathlib import Path
 from datetime import datetime
+import late
 
 # Constants
 # Salary grade for labor
-LOW_SALARY = 300
+LOW_SALARY = 10000
 # Total working days
 WORKING_DAYS = 26
 
@@ -55,13 +56,7 @@ def perDayDirectEmpCost(file, outfile, dates):
 
 
 # Write master attendance dict to csv
-def writeMasterToCSV(output_path, salaryfile, dates):
-	# Construct a dataframe for employee salaries
-	df = pd.read_csv(salaryfile)
-	# making new data frame with dropped NA values 
-	df = df.dropna(axis = 0, how ='any')
-	df.set_index('Employee Code', inplace=True)
-	
+def writeMasterToCSV(output_path, df, dates):
 	# Sort dates
 	dates.sort(key = lambda date: datetime.strptime(date, '%d-%b'))
 	
@@ -110,12 +105,14 @@ def writeMasterToCSV(output_path, salaryfile, dates):
 	print('Writing out to Emp-Attendance file at ' + str(output_path) + ' completed...')
 	
 # Create a master dictionary for each employe and their attendance across the dates
-def countDailyAttendance(d, date):
+def countDailyAttendance(d, date, dfsalary):
 	count = 0
 	for x in d:
 		# Get status and name of each employee
 		status = d[x]['Status']
 		name = d[x]['Name']
+		intime = d[x]['InTime']
+		shift = d[x]['Shift']
 
 		# Update record for employee with empno = x
 		if days_dict.get(x) == None:
@@ -125,7 +122,7 @@ def countDailyAttendance(d, date):
 			# Check if keyword 'present' is in status
 			if ('Present' in status):
 				days_dict[x]['count'] = 1
-				days_dict[x]['attendance'][date] = 'P' 
+				days_dict[x]['attendance'][date] = late.checkLate(x,intime,shift,dfsalary)
 			else:
 				days_dict[x]['attendance'][date] = 'A'
 			
@@ -137,7 +134,7 @@ def countDailyAttendance(d, date):
 			# Check if keyword 'present' is in status
 			if ('Present' in status):
 				days_dict[x]['count'] += 1
-				days_dict[x]['attendance'][date] = 'P'
+				days_dict[x]['attendance'][date] = late.checkLate(x,intime,shift,dfsalary)
 			else:
 				days_dict[x]['attendance'][date] = 'A'
 
@@ -146,7 +143,7 @@ def countDailyAttendance(d, date):
 
 
 # Get each file from the input folder and convert into a dictionary
-def createEmpAttendanceDict(data_source):
+def createEmpAttendanceDict(data_source, dfsalary):
 	dates = []
 	for filename in os.listdir(data_source):
 		try:
@@ -157,10 +154,10 @@ def createEmpAttendanceDict(data_source):
 				# Get source file path
 				file_path = Path(Path(data_source) / filename)
 				# Create Data Frame
-				df = pd.read_csv(file_path, index_col='E. Code', usecols=['E. Code', 'Name', 'Status'])
+				df = pd.read_csv(file_path, index_col='E. Code', usecols=['E. Code', 'Name', 'Status', 'InTime', 'Shift'])
 				d = df.to_dict('index')
 				# Update master dictionary with attendances for that day
-				countDailyAttendance(d, date)
+				countDailyAttendance(d, date, dfsalary)
 		except Exception as e:
 			print('[ERROR] There was an issue with file ' + filename + ', it will be skipped over')
 			print(e)
@@ -173,14 +170,21 @@ if __name__ == '__main__':
 	print('Execution started...')
 	data_source = Path(Path(os.getcwd()) / 'input')
 	print('Source: ', data_source)
-	# Get dates
-	dates = createEmpAttendanceDict(data_source)
+	
 	# Get employee-salary rate file
 	salaryfile = Path(Path(os.getcwd()) / 'input/salary-eid.csv')
+	# Construct a dataframe for employee salaries
+	dfsalary = pd.read_csv(salaryfile)
+	# making new data frame with dropped NA values 
+	dfsalary = dfsalary.dropna(axis = 0, how ='any')
+	dfsalary.set_index('Employee Code', inplace=True)
+	
+	# Get dates
+	dates = createEmpAttendanceDict(data_source, dfsalary)
 	# Set path for employee attendance file
 	output_path = Path(Path(os.getcwd()) / 'output/attendance-count.csv')
 	# Write out the attendances to CSV
-	writeMasterToCSV(output_path, salaryfile, dates)
+	writeMasterToCSV(output_path, dfsalary, dates)
 	cost_for_day_file = Path(Path(os.getcwd()) / 'output/cost-per-day.csv')
 	# Calculate and write the cost per day variation for direct emps
 	perDayDirectEmpCost(output_path, cost_for_day_file, dates)
