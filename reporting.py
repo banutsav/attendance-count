@@ -190,3 +190,5 @@ if __name__ == '__main__':
 	perDayDirectEmpCost(output_path, cost_for_day_file, dates)
 	end = time.time()
 	print('Execution finished in',str(round(end-start,2)),'secs')
+	# required for executables
+	# input('You can close this window now...')
